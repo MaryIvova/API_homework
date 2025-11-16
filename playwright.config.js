@@ -36,6 +36,7 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     apiURL: 'https://apichallenges.eviltester.com',
+    ignoreHTTPSErrors: true,
   },
 
   /* Configure projects for major browsers */
