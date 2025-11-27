@@ -1,10 +1,11 @@
 import { faker } from '@faker-js/faker';
 
 export class ToDoBuilder {
-  constructor(title, doneStatus, description) {
+  constructor(title, doneStatus, description, priority) {
     this.title = title;
     this.doneStatus = doneStatus;
     this.description = description;
+    this.priority = priority;
   }
 
   generate() {
@@ -12,6 +13,7 @@ export class ToDoBuilder {
       title: this.title,
       doneStatus: this.doneStatus,
       description: this.description,
+      priority: this.priority,
     };
   }
 }
