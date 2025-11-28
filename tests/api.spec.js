@@ -66,21 +66,11 @@ test.describe('Challenge', () => {
     const resp1 = await a.json();
     console.log(resp1);
     await api.todos.post(token, testinfo, notDoneTodo);
-    let respFilter = await api.todos.filterTodos(token, testinfo);
-    const response = await respFilter.json();
-    const todos = response.todos[10];
-    expect(respFilter.status()).toBe(200);
-    expect(todos.doneStatus()).toBe(true); //!!! error??
-  });
-
-  test('23 DELETE/todos {id} @DELETE ', async ({ api }, testinfo) => {
-    const doneTodo = new ToDoBuilder(faker.string.alpha(10), true, faker.lorem.words()).generate();
-    let createTodo = await api.todos.post(token, testinfo, doneTodo);
-    const createdTodo = await createTodo.json();
-    console.log(createTodo);
-    expect(createTodo.status()).toBe(201);
-    let getResponse = await api.todos.deleteTodo(token, testinfo, createdTodo.id);
-    expect(getResponse.status()).toBe(200);
+    let response = await api.todos.filterTodos(token, testinfo);
+    const json = await response.json();
+    const todos = json.todos[0];
+    expect(response.status()).toBe(200);
+    expect(todos.doneStatus).toBe(true);
   });
 
   test('10. POST/todos 400 - no doneStatus @POST', async ({ request }, testinfo) => {
@@ -188,20 +178,31 @@ test.describe('Challenge', () => {
     expect(updateResponse.status()).toBe(200);
   });
 
+  test('23 DELETE/todos {id} @DELETE ', async ({ api }, testinfo) => {
+    const doneTodo = new ToDoBuilder(faker.string.alpha(10), true, faker.lorem.words()).generate();
+    let createTodo = await api.todos.post(token, testinfo, doneTodo);
+    const createdTodo = await createTodo.json();
+    console.log(createTodo);
+    expect(createTodo.status()).toBe(201);
+    let getResponse = await api.todos.deleteTodo(token, testinfo, createdTodo.id);
+    expect(getResponse.status()).toBe(200);
+  });
+
   test('25 GET/todos (200) -  XML', async ({ api }, testinfo) => {
-    const response = await api.todos.getApplicationXML(token, testinfo);
-    //console.log(api.todos.getApplicationXML.body);
-    //expect(response.status()).toBe(200);
-    expect(response).toContain('<todos>'); //не понимаю различий с боди и просто респонсом ,хочу и статус проверить и боди
+    const response = await api.todos.getApplication(token, testinfo, 'application/xml');
+    console.log(api.todos.getApplication.body);
+    expect(response.status()).toBe(200);
+    let xml = await response.text();
+    expect(xml).toContain('<todos>');
   });
 
   test('26 GET/todos (200) -  JSON', async ({ api }, testinfo) => {
-    const response = await api.todos.getApplicationJSON(token, testinfo);
-    const headers = response.headers(); // это метод?
-    console.log(`${testinfo.project.use.apiURL}${headers.location}`); // кто такой тут локейшн?
-    const json = headers['content-type']; // почему квадратные скобки
-    console.log(json);
-    expect(json).toContain('application/json'); //хочу проверку по хедерам в респонсу, есть такое поле
+    const response = await api.todos.getApplication(token, testinfo, 'application/json');
+    const headers = response.headers();
+    console.log(`${testinfo.project.use.apiURL}${headers.location}`);
+    const contentType = headers['content-type'];
+    console.log(contentType);
+    expect(contentType).toContain('application/json');
   });
 
   test('28 GET/todos (200) -  preferXML', async ({ api }, testinfo) => {
@@ -214,9 +215,19 @@ test.describe('Challenge', () => {
   });
 
   test('30 GET/todos (406) -  header NOT ACCEPTABLE', async ({ api }, testinfo) => {
-    const response = await api.todos.getApplicationGzip(token, testinfo);
+    const response = await api.todos.getApplication(token, testinfo, 'application/gzip');
     expect(response.status()).toBe(406);
     expect(response.statusText()).toBe('Not Acceptable');
+  });
+
+  test('41 DELETE/heartbeat (405) - @DELETE ', async ({ api }, testinfo) => {
+    let getResponse = await api.todos.deleteHeartbeat(token, testinfo);
+    expect(getResponse.status()).toBe(405);
+  });
+
+  test('42 PATCH/heartbeat (500) - @PATCH ', async ({ api }, testinfo) => {
+    let getResponse = await api.todos.patchHeartbeat(token, testinfo);
+    expect(getResponse.status()).toBe(500);
   });
 
   test('45. POST/todos 405 - override Delete @POST', async ({ request }, testinfo) => {
@@ -227,7 +238,7 @@ test.describe('Challenge', () => {
       faker.string.alpha(200),
       'high',
     ).generate();
-    let response = await overrideDelete.overrideDelete(token, testinfo, todoData, false);
+    let response = await overrideDelete.heartbeat('delete', token, testinfo, todoData, false);
     expect(response.status()).toBe(405);
   });
 
@@ -239,8 +250,8 @@ test.describe('Challenge', () => {
       faker.string.alpha(200),
       'high',
     ).generate();
-    let response = await overridePatch.overridePATCH(token, testinfo, todoData, false);
-    expect(response.status()).toBe(500); //сделать одну спеку для 3х оверрайдов
+    let response = await overridePatch.heartbeat('PATCH', token, testinfo, todoData, false);
+    expect(response.status()).toBe(500);
   });
 
   test('47. POST/todos 501 - override TRACE @POST', async ({ request }, testinfo) => {
@@ -251,9 +262,26 @@ test.describe('Challenge', () => {
       faker.string.alpha(200),
       'high',
     ).generate();
-    let response = await overrideTrace.overrideTRACE(token, testinfo, todoData, false);
-    expect(response.status()).toBe(501); //сделать одну спеку для 3х оверрайдов
+    let response = await overrideTrace.heartbeat('TRACE', token, testinfo, todoData, false);
+    expect(response.status()).toBe(501);
   });
 
-  //еще 3 на пост
+  test('58 DELETE /todos/{id} (200) all - @DELETE ', async ({ api }, testinfo) => {
+    const getAllTodos = await api.todos.get(token, testinfo);
+    const body = await getAllTodos.json();
+    const todos = body.todos;
+    if (todos && todos.length > 0) {
+      for (const todo of todos) {
+        let deleteResponse = await api.todos.deleteTodo(token, testinfo, todo.id);
+        expect(deleteResponse.status()).toBe(200);
+      }
+    }
+    const deletedTodos = await api.todos.get(token, testinfo);
+    expect(deletedTodos.status()).toBe(200);
+    const deleteTodosBody = await deletedTodos.json();
+    expect(deleteTodosBody.todos.length).toBe(0);
+    console.log(deleteTodosBody.todos);
+  });
+
+  //еще 2 на пост, 3 put ,1 patch
 });

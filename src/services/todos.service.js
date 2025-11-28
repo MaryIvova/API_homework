@@ -7,11 +7,10 @@ export class ToDosService {
 
   async get(token, testinfo) {
     return test.step('GET /todos', async () => {
-      const r = await this.request.get(`${testinfo.project.use.apiURL}/todos`, {
+      const response = await this.request.get(`${testinfo.project.use.apiURL}/todos`, {
         headers: { 'X-CHALLENGER': token },
       });
-      const body = await r.json();
-      return body;
+      return response;
     });
   }
 
@@ -32,7 +31,6 @@ export class ToDosService {
         headers: { 'X-CHALLENGER': token },
         data: todo,
       });
-      //const resp = await r.json();
       return r;
     });
   }
@@ -44,7 +42,6 @@ export class ToDosService {
         headers: { 'X-CHALLENGER': token },
         data: todo,
       });
-      //const resp = await r.json();
       return r;
     });
   }
@@ -61,21 +58,10 @@ export class ToDosService {
     });
   }
 
-  async getApplicationXML(token, testinfo) {
+  async getApplication(token, testinfo, applicationtype) {
     return test.step('GET /todos', async () => {
       const resp = await this.request.get(`${testinfo.project.use.apiURL}/todos`, {
-        headers: { 'X-CHALLENGER': token, Accept: 'application/xml' },
-      });
-      const body = await resp.text();
-      return body;
-      //return resp;
-    });
-  }
-
-  async getApplicationJSON(token, testinfo) {
-    return test.step('GET /todos', async () => {
-      const resp = await this.request.get(`${testinfo.project.use.apiURL}/todos`, {
-        headers: { 'X-CHALLENGER': token, Accept: 'application/json' },
+        headers: { 'X-CHALLENGER': token, Accept: applicationtype },
       });
       return resp;
     });
@@ -90,15 +76,6 @@ export class ToDosService {
     });
   }
 
-  async getApplicationGzip(token, testinfo) {
-    return test.step('GET /todos', async () => {
-      const resp = await this.request.get(`${testinfo.project.use.apiURL}/todos`, {
-        headers: { 'X-CHALLENGER': token, Accept: 'application/gzip' },
-      });
-      return resp;
-    });
-  }
-
   async deleteTodo(token, testinfo, id) {
     return test.step('DELETE /todos/{id})', async () => {
       const response = await this.request.delete(`${testinfo.project.use.apiURL}/todos/${id}`, {
@@ -108,35 +85,30 @@ export class ToDosService {
     });
   }
 
-  async overrideDelete(token, testinfo, todo) {
-    return test.step('POST /heartbeat', async () => {
-      const r = await this.request.post(`${testinfo.project.use.apiURL}/heartbeat`, {
-        ignoreHTTPSErrors: true,
-        headers: { 'X-CHALLENGER': token, 'X-HTTP-Method-Override': 'DELETE' },
+  async deleteHeartbeat(token, testinfo) {
+    return test.step('DELETE /heatbeat)', async () => {
+      const response = await this.request.delete(`${testinfo.project.use.apiURL}/heartbeat`, {
+        headers: { 'X-CHALLENGER': token },
       });
-      //const resp = await r.json();
-      return r;
+      return response;
     });
   }
 
-  async overridePATCH(token, testinfo, todo) {
-    return test.step('POST /heartbeat', async () => {
-      const r = await this.request.post(`${testinfo.project.use.apiURL}/heartbeat`, {
-        ignoreHTTPSErrors: true,
-        headers: { 'X-CHALLENGER': token, 'X-HTTP-Method-Override': 'PATCH' },
+  async patchHeartbeat(token, testinfo) {
+    return test.step('PATCH /heatbeat)', async () => {
+      const response = await this.request.patch(`${testinfo.project.use.apiURL}/heartbeat`, {
+        headers: { 'X-CHALLENGER': token },
       });
-      //const resp = await r.json();
-      return r;
+      return response;
     });
   }
 
-  async overrideTRACE(token, testinfo, todo) {
+  async heartbeat(type, token, testinfo, todo) {
     return test.step('POST /heartbeat', async () => {
       const r = await this.request.post(`${testinfo.project.use.apiURL}/heartbeat`, {
         ignoreHTTPSErrors: true,
-        headers: { 'X-CHALLENGER': token, 'X-HTTP-Method-Override': 'TRACE' },
+        headers: { 'X-CHALLENGER': token, 'X-HTTP-Method-Override': type.toUpperCase() },
       });
-      //const resp = await r.json();
       return r;
     });
   }
