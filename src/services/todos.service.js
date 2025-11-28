@@ -15,9 +15,10 @@ export class ToDosService {
     });
   }
 
-  async getById(id, token, testinfo) {
+  async getById(token, testinfo, id) {
     return test.step('GET /todos/${id}', async () => {
       const r = await this.request.get(`${testinfo.project.use.apiURL}/todos/${id}`, {
+        ignoreHTTPSErrors: true,
         headers: { 'X-CHALLENGER': token },
       });
       return r;
@@ -27,6 +28,18 @@ export class ToDosService {
   async post(token, testinfo, todo) {
     return test.step('POST /todos', async () => {
       const r = await this.request.post(`${testinfo.project.use.apiURL}/todos`, {
+        ignoreHTTPSErrors: true,
+        headers: { 'X-CHALLENGER': token },
+        data: todo,
+      });
+      //const resp = await r.json();
+      return r;
+    });
+  }
+
+  async postById(token, testinfo, id, todo) {
+    return test.step('POST /todos/{id}', async () => {
+      const r = await this.request.post(`${testinfo.project.use.apiURL}/todos/${id}`, {
         ignoreHTTPSErrors: true,
         headers: { 'X-CHALLENGER': token },
         data: todo,
@@ -83,6 +96,48 @@ export class ToDosService {
         headers: { 'X-CHALLENGER': token, Accept: 'application/gzip' },
       });
       return resp;
+    });
+  }
+
+  async deleteTodo(token, testinfo, id) {
+    return test.step('DELETE /todos/{id})', async () => {
+      const response = await this.request.delete(`${testinfo.project.use.apiURL}/todos/${id}`, {
+        headers: { 'X-CHALLENGER': token },
+      });
+      return response;
+    });
+  }
+
+  async overrideDelete(token, testinfo, todo) {
+    return test.step('POST /heartbeat', async () => {
+      const r = await this.request.post(`${testinfo.project.use.apiURL}/heartbeat`, {
+        ignoreHTTPSErrors: true,
+        headers: { 'X-CHALLENGER': token, 'X-HTTP-Method-Override': 'DELETE' },
+      });
+      //const resp = await r.json();
+      return r;
+    });
+  }
+
+  async overridePATCH(token, testinfo, todo) {
+    return test.step('POST /heartbeat', async () => {
+      const r = await this.request.post(`${testinfo.project.use.apiURL}/heartbeat`, {
+        ignoreHTTPSErrors: true,
+        headers: { 'X-CHALLENGER': token, 'X-HTTP-Method-Override': 'PATCH' },
+      });
+      //const resp = await r.json();
+      return r;
+    });
+  }
+
+  async overrideTRACE(token, testinfo, todo) {
+    return test.step('POST /heartbeat', async () => {
+      const r = await this.request.post(`${testinfo.project.use.apiURL}/heartbeat`, {
+        ignoreHTTPSErrors: true,
+        headers: { 'X-CHALLENGER': token, 'X-HTTP-Method-Override': 'TRACE' },
+      });
+      //const resp = await r.json();
+      return r;
     });
   }
 }
