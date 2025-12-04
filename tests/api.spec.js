@@ -255,10 +255,32 @@ test.describe('Challenge', () => {
     expect(xml).toContain('application/xml');
   });
 
-  test('30 GET/todos (406) -  header NOT ACCEPTABLE', async ({ api }, testinfo) => {
+  test('30 GET/todos (406) -  header NOT ACCEPTABLE @GET', async ({ api }, testinfo) => {
     const response = await api.todos.getApplication(token, testinfo, 'application/gzip');
     expect(response.status()).toBe(406);
     expect(response.statusText()).toBe('Not Acceptable');
+  });
+
+  test('31 POST/todos  -  xml @POST', async ({ api }, testinfo) => {
+    const doneTodo = new ToDoBuilder(faker.string.alpha(10), true, faker.lorem.words()).generate();
+    const response = await api.todos.postContentType(token, testinfo, doneTodo, 'application/xml');
+    const headers = response.headers();
+    console.log(`${testinfo.project.use.apiURL}${headers.location}`);
+    const contentType = headers['content-type'];
+    console.log(contentType);
+    expect(response.status()).toBe(201);
+    expect(contentType).toContain('application/xml');
+  });
+
+  test('32 POST/todos  - json  @POST', async ({ api }, testinfo) => {
+    const doneTodo = new ToDoBuilder(faker.string.alpha(10), true, faker.lorem.words()).generate();
+    const response = await api.todos.postContentType(token, testinfo, doneTodo, 'application/json');
+    const headers = response.headers();
+    console.log(`${testinfo.project.use.apiURL}${headers.location}`);
+    const contentType = headers['content-type'];
+    console.log(contentType);
+    expect(response.status()).toBe(201);
+    expect(contentType).toContain('application/json');
   });
 
   test('41 DELETE/heartbeat (405) - @DELETE ', async ({ api }, testinfo) => {

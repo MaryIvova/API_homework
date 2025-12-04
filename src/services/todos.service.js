@@ -46,6 +46,17 @@ export class ToDosService {
     });
   }
 
+  async postContentType(token, testinfo, todo, applicationtype) {
+    return test.step('POST /todos', async () => {
+      const r = await this.request.post(`${testinfo.project.use.apiURL}/todos`, {
+        ignoreHTTPSErrors: true,
+        headers: { 'X-CHALLENGER': token, Accept: applicationtype },
+        data: todo,
+      });
+      return r;
+    });
+  }
+
   async filterTodos(token, testinfo) {
     return test.step('GET /todos?doneStatus=true', async () => {
       const response = await this.request.get(
