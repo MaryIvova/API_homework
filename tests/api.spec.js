@@ -13,7 +13,6 @@ test.describe('Challenge', () => {
     const headers = r.headers();
     console.log(`${testinfo.project.use.apiURL}${headers.location}`);
     token = headers['x-challenger'];
-    //console.log(token);
   });
 
   test('получить токен', async ({ request }, testinfo) => {
@@ -41,11 +40,9 @@ test.describe('Challenge', () => {
     expect(r.status()).toBe(404);
   });
 
-  test('05 GET /todos/{id} (200) - получить todo по id @GET', async ({ request }, testinfo) => {
-    const todosService = new ToDosService(request);
-    let r = await request.get(`${testinfo.project.use.apiURL}/todos`, {
-      headers: { 'X-CHALLENGER': token },
-    });
+  test('05 GET /todos/{id} (200) - получить todo по id @GET', async ({ api }, testinfo) => {
+    const todosService = new ToDosService(api.request);
+    let r = await api.todos.get(token, testinfo);
     expect(r.status()).toBe(200);
     const todos = await r.json();
     let size = todos.todos.length;
@@ -168,14 +165,58 @@ test.describe('Challenge', () => {
     expect(createTodo.status()).toBe(201);
     let getResponse = await api.todos.getById(token, testinfo, createdTodo.id);
     console.log('GET response status:', getResponse.status());
-
     const updatedTodo = new ToDoBuilder(
       `UPDATED-${faker.string.alpha(5)}`,
-      true, // mark as done
+      true,
       `UPDATED-${faker.lorem.words()}`,
     ).generate();
     let updateResponse = await api.todos.postById(token, testinfo, createdTodo.id, updatedTodo);
     expect(updateResponse.status()).toBe(200);
+  });
+
+  test('16 PUT /todos/{id} (400)  - @PUT ', async ({ api }, testinfo) => {
+    const putToDo = await api.todos.putError(token, testinfo, 33);
+    expect(putToDo.status()).toBe(400);
+  });
+
+  test('19 PUT /todos/{id} (200)  - full update @PUT ', async ({ api }, testinfo) => {
+    const notDoneTodo = new ToDoBuilder(
+      faker.string.alpha(10),
+      false,
+      faker.lorem.words(),
+    ).generate();
+    let createTodo = await api.todos.post(token, testinfo, notDoneTodo);
+    const createdTodo = await createTodo.json();
+    console.log(createTodo);
+    expect(createTodo.status()).toBe(201);
+    const putUpdate = new ToDoBuilder(
+      `UPDATED-${faker.string.alpha(5)}`,
+      true,
+      `UPDATED-${faker.lorem.words()}`,
+    ).generate();
+    let response = await api.todos.putTodo(token, testinfo, createdTodo.id, putUpdate);
+    expect(response.status()).toBe(200);
+    const body = await response.json();
+    console.log(body);
+  });
+
+  test('21 PUT /todos/{id} (400)  - erroe update @PUT ', async ({ api }, testinfo) => {
+    const notDoneTodo = new ToDoBuilder(
+      faker.string.alpha(10),
+      false,
+      faker.lorem.words(),
+    ).generate();
+    let createTodo = await api.todos.post(token, testinfo, notDoneTodo);
+    const createdTodo = await createTodo.json();
+    console.log(createTodo);
+    expect(createTodo.status()).toBe(201);
+    const putUpdate = new ToDoBuilder(
+      `UPDATED-${faker.string.alpha(5)}`,
+      true,
+      `UPDATED-${faker.lorem.words()}`,
+    ).generate();
+    let response = await api.todos.putTodo(token, testinfo, 44, putUpdate);
+    expect(response.status()).toBe(400);
   });
 
   test('23 DELETE/todos {id} @DELETE ', async ({ api }, testinfo) => {
@@ -283,5 +324,5 @@ test.describe('Challenge', () => {
     console.log(deleteTodosBody.todos);
   });
 
-  //еще 2 на пост, 3 put ,1 patch
+  //еще 2 на пост,
 });

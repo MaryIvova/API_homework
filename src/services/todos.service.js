@@ -112,4 +112,28 @@ export class ToDosService {
       return r;
     });
   }
+
+  async putError(token, testinfo, id, todo) {
+    return test.step('PUT /todos{id}', async () => {
+      const r = await this.request.put(`${testinfo.project.use.apiURL}/todos/${id}`, {
+        ignoreHTTPSErrors: true,
+        headers: { 'X-CHALLENGER': token },
+      });
+      return r;
+    });
+  }
+
+  async putTodo(token, testinfo, id, todo) {
+    return test.step('PUT /todos/{id}', async () => {
+      const r = await this.request.put(`${testinfo.project.use.apiURL}/todos/${id}`, {
+        headers: {
+          'X-CHALLENGER': token,
+          'Content-Type': 'application/json',
+        },
+        data: todo,
+        ignoreHTTPSErrors: true,
+      });
+      return r;
+    });
+  }
 }
