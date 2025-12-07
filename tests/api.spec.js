@@ -15,26 +15,21 @@ test.describe('Challenge', () => {
     token = headers['x-challenger'];
   });
 
-  test('получить токен', async ({ request }, testinfo) => {
-    let r = await request.get(`${testinfo.project.use.apiURL}/challenges`, {
-      headers: { 'X-CHALLENGER': token },
-    });
-    const body = await r.json();
-    expect(body.challenges.length).toBe(59);
-    console.log(body.challenges);
+  test('получить токен', async ({ api }, testinfo) => {
+    let resp = await api.challenges.get(token, testinfo);
+    expect(resp.challenges.length).toBe(59);
+    console.log(resp.challenges);
   });
 
-  test('3. Get/todos 200 @GET', async ({ request }, testinfo) => {
-    let r = await request.get(`${testinfo.project.use.apiURL}/todos`, {
-      headers: { 'X-CHALLENGER': token },
-    });
-    const body = await r.json();
+  test('3. Get/todos 200 @GET', async ({ api }, testinfo) => {
+    let resp = await api.todos.get(token, testinfo);
+    const body = await resp.json();
     expect(body.todos.length).toBe(10);
     console.log(body.todos);
   });
 
-  test('04 GET /todo (404) - wrong url @GET', async ({ request }, testinfo) => {
-    let r = await request.get(`${testinfo.project.use.apiURL}/todo`, {
+  test('04 GET /todo (404) - wrong url @GET', async ({ api }, testinfo) => {
+    let r = await api.todos.get(`${testinfo.project.use.apiURL}/todo`, {
       headers: { 'X-CHALLENGER': token },
     });
     expect(r.status()).toBe(404);
@@ -52,7 +47,7 @@ test.describe('Challenge', () => {
     expect(r.status()).toBe(200);
   });
 
-  test('07 GET/todos ? (200) -  filter todos', async ({ api }, testinfo) => {
+  test('07 GET/todos ? (200) -  filter todos @GET', async ({ api }, testinfo) => {
     const doneTodo = new ToDoBuilder(faker.string.alpha(10), true, faker.lorem.words()).generate();
     const notDoneTodo = new ToDoBuilder(
       faker.string.alpha(10),
@@ -70,88 +65,88 @@ test.describe('Challenge', () => {
     expect(todos.doneStatus).toBe(true);
   });
 
-  test('10. POST/todos 400 - no doneStatus @POST', async ({ request }, testinfo) => {
-    let r = await request.post(`${testinfo.project.use.apiURL}/todos`, {
-      headers: { 'X-CHALLENGER': token },
-      data: new ToDoBuilder(faker.lorem.word, faker.number.int(), faker.lorem.word).generate(),
-    });
+  test('10. POST/todos 400 - no doneStatus @POST', async ({ api }, testinfo) => {
+    const todoData = new ToDoBuilder(
+      faker.lorem.word,
+      faker.number.int(),
+      faker.lorem.word,
+    ).generate();
+    let r = await api.todos.post(token, testinfo, todoData);
     expect.soft(r.status()).toBe(400);
-
-    r = await request.post(`${testinfo.project.use.apiURL}/todos`, {
-      headers: { 'X-CHALLENGER': token },
-      data: new ToDoBuilder(faker.lorem.word, faker.lorem.word, faker.lorem.word).generate(),
-    });
+    const todoData2 = new ToDoBuilder(
+      faker.lorem.word,
+      faker.number.word,
+      faker.lorem.word,
+    ).generate();
+    r = await api.todos.post(token, testinfo, todoData2);
     expect.soft(r.status()).toBe(400);
     expect(test.info().errors).toHaveLength(0);
   });
 
-  test('09. POST/todos 201 -  create ToDO @POST', async ({ request }, testinfo) => {
-    const task = new ToDosService(request);
+  test('09. POST/todos 201 -  create ToDO @POST', async ({ api }, testinfo) => {
     const todoData = new ToDoBuilder(faker.string.alpha(10), true, faker.lorem.words()).generate();
-    let response = await task.post(token, testinfo, todoData, false);
+    let response = await api.todos.post(token, testinfo, todoData, false);
     const body = await response.json();
     console.log(body);
     expect(response.status()).toBe(201);
   });
 
-  test('11. POST/todos 400 - title too long  @POST', async ({ request }, testinfo) => {
-    let r = await request.post(`${testinfo.project.use.apiURL}/todos`, {
-      headers: { 'X-CHALLENGER': token },
-      data: new ToDoBuilder(faker.lorem.sentence(13), true, faker.lorem.words()).generate(),
-    });
+  test('11. POST/todos 400 - title too long  @POST', async ({ api }, testinfo) => {
+    const todoData = new ToDoBuilder(
+      faker.lorem.sentence(13),
+      true,
+      faker.string.alpha(202),
+    ).generate();
+    let r = await api.todos.post(token, testinfo, todoData);
     const body = await r.json();
     console.log('Error response:', body);
     expect(r.status()).toBe(400);
   });
 
-  test('12. POST/todos 400 - description too long  @POST', async ({ request }, testinfo) => {
-    const wrongDescription = new ToDosService(request);
+  test('12. POST/todos 400 - description too long  @POST', async ({ api }, testinfo) => {
     const todoData = new ToDoBuilder(
       faker.lorem.sentence(3),
       true,
       faker.string.alpha(202),
     ).generate();
-    let response = await wrongDescription.post(token, testinfo, todoData, false);
+    let response = await api.todos.post(token, testinfo, todoData, false);
     const body = await response.json();
     console.log('Error response:', body);
     expect(response.status()).toBe(400);
   });
 
-  test('13. POST/todos 201 - max out content  @POST', async ({ request }, testinfo) => {
-    const boundaryValues = new ToDosService(request);
+  test('13. POST/todos 201 - max out content  @POST', async ({ api }, testinfo) => {
     const todoData = new ToDoBuilder(
       faker.string.alpha(50),
       true,
       faker.string.alpha(200),
     ).generate();
-    let response = await boundaryValues.post(token, testinfo, todoData, false);
+    let response = await api.todos.post(token, testinfo, todoData, false);
     const body = await response.json();
     console.log(body);
     expect(response.status()).toBe(201);
   });
 
-  test('14. POST/todos 413 - content too long @POST', async ({ request }, testinfo) => {
-    const boundaryValues = new ToDosService(request);
+  test('14. POST/todos 413 - content too long @POST', async ({ api }, testinfo) => {
     const todoData = new ToDoBuilder(
       faker.string.alpha(50),
       true,
       faker.string.alpha(5000),
     ).generate();
-    let response = await boundaryValues.post(token, testinfo, todoData, false);
+    let response = await api.todos.post(token, testinfo, todoData, false);
     const body = await response.json();
     console.log(body);
     expect(response.status()).toBe(413);
   });
 
-  test('15. POST/todos 400 - non existing field  @POST', async ({ request }, testinfo) => {
-    const boundaryValues = new ToDosService(request);
+  test('15. POST/todos 400 - non existing field  @POST', async ({ api }, testinfo) => {
     const todoData = new ToDoBuilder(
       faker.string.alpha(50),
       true,
       faker.string.alpha(200),
       'high',
     ).generate();
-    let response = await boundaryValues.post(token, testinfo, todoData, false);
+    let response = await api.todos.post(token, testinfo, todoData, false);
     const body = await response.json();
     console.log(body);
     expect(response.status()).toBe(400);
@@ -293,39 +288,36 @@ test.describe('Challenge', () => {
     expect(getResponse.status()).toBe(500);
   });
 
-  test('45. POST/todos 405 - override Delete @POST', async ({ request }, testinfo) => {
-    const overrideDelete = new ToDosService(request);
+  test('45. POST/todos 405 - override Delete @POST', async ({ api }, testinfo) => {
     const todoData = new ToDoBuilder(
       faker.string.alpha(50),
       true,
       faker.string.alpha(200),
       'high',
     ).generate();
-    let response = await overrideDelete.heartbeat('delete', token, testinfo, todoData, false);
+    let response = await api.todos.heartbeat('delete', token, testinfo, todoData, false);
     expect(response.status()).toBe(405);
   });
 
-  test('46. POST/todos 500 - override PATCH @POST', async ({ request }, testinfo) => {
-    const overridePatch = new ToDosService(request);
+  test('46. POST/todos 500 - override PATCH @POST', async ({ api }, testinfo) => {
     const todoData = new ToDoBuilder(
       faker.string.alpha(50),
       true,
       faker.string.alpha(200),
       'high',
     ).generate();
-    let response = await overridePatch.heartbeat('PATCH', token, testinfo, todoData, false);
+    let response = await api.todos.heartbeat('PATCH', token, testinfo, todoData, false);
     expect(response.status()).toBe(500);
   });
 
-  test('47. POST/todos 501 - override TRACE @POST', async ({ request }, testinfo) => {
-    const overrideTrace = new ToDosService(request);
+  test('47. POST/todos 501 - override TRACE @POST', async ({ api }, testinfo) => {
     const todoData = new ToDoBuilder(
       faker.string.alpha(50),
       true,
       faker.string.alpha(200),
       'high',
     ).generate();
-    let response = await overrideTrace.heartbeat('TRACE', token, testinfo, todoData, false);
+    let response = await api.todos.heartbeat('TRACE', token, testinfo, todoData, false);
     expect(response.status()).toBe(501);
   });
 
@@ -345,6 +337,4 @@ test.describe('Challenge', () => {
     expect(deleteTodosBody.todos.length).toBe(0);
     console.log(deleteTodosBody.todos);
   });
-
-  //еще 2 на пост,
 });

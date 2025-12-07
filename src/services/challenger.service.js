@@ -8,7 +8,6 @@ export class ChallengerService {
   async post(testinfo) {
     return test.step('POST /challenger', async () => {
       const response = await this.request.post(`${testinfo.project.use.apiURL}/challenger`, {
-        // Ignore SSL errors for this specific request
         ignoreHTTPSErrors: true,
       });
       return response;

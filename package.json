@@ -5,7 +5,11 @@
   "scripts": {
     "test": "npx playwright test",
     "testUI": "npx playwright test --ui",
-    "test:api": "npx playwright test --grep @api",
+    "testGET": "npx playwright test --grep @GET",
+    "testPOST": "npx playwright test --grep @POST",
+    "testPATCH": "npx playwright test --grep @PATCH",
+    "testDELETE": "npx playwright test --grep @DELETE",
+    "testPUT": "npx playwright test --grep @PUT",
     "report": "npx playwright show-report",
     "allureFile": "npx allure awesome ./allure-results --single-file"
   },
