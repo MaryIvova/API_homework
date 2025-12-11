@@ -1,7 +1,7 @@
 import { expect } from '@playwright/test';
 import { faker } from '@faker-js/faker';
 import { test } from '../src/helpers/index';
-import { ToDosService } from '../src/services/index';
+import { ToDosService, ToDoService } from '../src/services/index';
 import { ToDoBuilder } from '../src/helpers/builder';
 import { json } from 'stream/consumers';
 
@@ -29,9 +29,7 @@ test.describe('Challenge', () => {
   });
 
   test('04 GET /todo (404) - wrong url @GET', async ({ api }, testinfo) => {
-    let r = await api.todos.get(`${testinfo.project.use.apiURL}/todo`, {
-      headers: { 'X-CHALLENGER': token },
-    });
+    let r = await api.todo.getToDo(token, testinfo);
     expect(r.status()).toBe(404);
   });
 
